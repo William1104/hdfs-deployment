@@ -1,0 +1,40 @@
+--- 
+
+- name: setup data folders
+  block:
+  - name: create /media/nvme/data 
+    ansible.builtin.file:
+      path: /media/nvme/hdfs
+      state: directory
+      owner: hdfs
+      group: hdfs  
+      mode: '0755'
+
+  - name: link /media/nvme/hdfs to /data
+    ansible.builtin.file:
+      src: /media/nvme/hdfs
+      dest: /data
+      owner: hdfs
+      group: hdfs
+      state: link
+
+  - name: create /data/nn folder
+    ansible.builtin.file:
+      path: /data/nn
+      state: directory
+      owner: hdfs
+      group: hdfs
+      mode: '0755'
+
+- name: generate work files
+  ansible.builtin.template:
+    src: workers.j2
+    dest: /etc/hadoop/workers
+    owner: hdfs
+    group: hdfs
+    mode: '0644'
+
+- name: format the namenode if required
+  command: sudo -u hdfs /opt/hadoop/bin/hdfs namenode -format 
+  args:
+    creates: /data/nn/current/VERSION

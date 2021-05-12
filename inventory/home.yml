@@ -1,0 +1,15 @@
+---
+namenodes:
+  hosts:
+    pi1:
+      ansible_user: william
+
+datanodes:
+  hosts:
+    pi[2:4]:
+      ansible_user: william
+
+hadoopnodes:
+  children:
+    namenodes:
+    datanodes:    

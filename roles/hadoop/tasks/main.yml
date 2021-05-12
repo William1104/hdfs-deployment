@@ -1,0 +1,82 @@
+--- 
+
+- name: be sure jdk 11 installed
+  yum:
+    name: openjdk-11-jdk-headless
+    state: latest
+
+- name: setup hdfs account
+  block:
+  - name: install zsh
+    yum:
+      name: zsh
+      state: latest
+
+  - name: create hdfs user and group
+    ansible.builtin.user:
+      name: hdfs
+      state: present 
+      shell: /bin/zsh
+      generate_ssh_key: yes
+
+  - name: fetch public keys
+    ansible.builtin.fetch:
+      src: /home/hdfs/.ssh/id_rsa.pub
+      dest: /tmp/fetched/
+
+  - name: push public keys 
+    authorized_key:
+      user: hdfs
+      state: present
+      key: "{{ lookup('file', '/tmp/fetched/' + item + '/home/hdfs/.ssh/id_rsa.pub') }}"
+    loop: "{{ ansible_play_batch }}"
+
+- name: extract hadoop
+  ansible.builtin.unarchive:
+    src: https://mirror-hk.koddos.net/apache/hadoop/common/hadoop-3.3.0/hadoop-3.3.0-aarch64.tar.gz
+    dest: /opt/
+    creates: /opt/hadoop-3.3.0
+    owner: hdfs
+    group: hdfs
+    remote_src: yes
+
+- name: link /opt/hadoop-3.3.0 to /opt/hadoop
+  ansible.builtin.file:
+    src: /opt/hadoop-3.3.0
+    dest: /opt/hadoop
+    owner: hdfs
+    group: hdfs
+    state: link
+
+- name: link /opt/hadoop/etc/hadoop to /etc/hadoop
+  ansible.builtin.file:
+    src: /opt/hadoop/etc/hadoop
+    dest: /etc/hadoop
+    owner: hdfs
+    group: hdfs
+    state: link
+
+- name: set required environment variables
+  ansible.builtin.blockinfile:
+    path: /etc/hadoop/hadoop-env.sh
+    state: present
+    marker: "# {mark} ANSIBLE MANAGED BLOCK "
+    block: |
+      export JAVA_HOME=$(readlink -f /usr/bin/javac | sed "s:/bin/javac::")
+      export HADOOP_HOME=/opt/hadoop
+
+- name: generate core-site.xml
+  ansible.builtin.template:
+    src: core-site.xml.j2
+    dest: /opt/hadoop/etc/hadoop/core-site.xml
+    owner: hdfs
+    group: hdfs
+    mode: '0664'
+
+- name: generate hdfs-site.xml
+  ansible.builtin.template:
+    src: hdfs-site.xml.j2
+    dest: /opt/hadoop/etc/hadoop/hdfs-site.xml
+    owner: hdfs
+    group: hdfs
+    mode: '0664'

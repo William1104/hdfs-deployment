@@ -1,0 +1,11 @@
+core_site:
+  - name: fs.defaultFS
+    value: hdfs://pi1:9000/
+  
+hdfs_site:
+  - name: dfs.replication
+    value: 1
+  - name: dfs.namenode.name.dir
+    value: /data/nn/
+  - name: dfs.datanode.data.dir
+    value: /data/dn/

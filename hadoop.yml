@@ -1,0 +1,5 @@
+---
+- hosts: hadoopnodes
+  become: yes
+  roles: 
+  - hadoop 

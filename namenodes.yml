@@ -1,0 +1,5 @@
+---
+- hosts: namenodes
+  become: yes
+  roles: 
+  - namenode

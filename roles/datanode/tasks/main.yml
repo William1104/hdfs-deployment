@@ -1,0 +1,27 @@
+--- 
+
+- name: setup data folders
+  block:
+  - name: create /media/nvme/data 
+    ansible.builtin.file:
+      path: /media/nvme/hdfs
+      state: directory
+      owner: hdfs
+      group: hdfs  
+      mode: '0755'
+
+  - name: link /media/nvme/hdfs to /data
+    ansible.builtin.file:
+      src: /media/nvme/hdfs
+      dest: /data
+      owner: hdfs
+      group: hdfs
+      state: link
+
+  - name: create /data/dn folder
+    ansible.builtin.file:
+      path: /data/dn
+      state: directory
+      owner: hdfs
+      group: hdfs
+      mode: '0755'
