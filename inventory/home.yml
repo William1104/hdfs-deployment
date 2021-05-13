@@ -9,6 +9,18 @@ datanodes:
     pi[2:4]:
       ansible_user: william
 
+zookeepers:
+  hosts:
+    pi2:
+      ansible_user: william
+      zkid: 1
+    pi3:
+      ansible_user: william
+      zkid: 2
+    pi4:
+      ansible_user: william
+      zkid: 3
+
 hadoopnodes:
   children:
     namenodes:

@@ -1,0 +1,5 @@
+---
+- hosts: zookeepers
+  become: yes
+  roles: 
+  - zookeeper

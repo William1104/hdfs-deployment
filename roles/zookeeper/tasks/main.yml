@@ -1,0 +1,40 @@
+--- 
+
+- name: install zookeeper
+  block:
+  - name: install zookeeper binary
+    yum:
+      name: zookeeper
+      state: latest
+  - name: create custom config folder
+    ansible.builtin.file:
+      path: /etc/zookeeper/conf_home
+      state: directory
+  - name: link custom config folder
+    ansible.builtin.file:
+      src: /etc/zookeeper/conf_home
+      dest: /etc/zookeeper/conf
+      state: link
+  - name: generate zookeeper config
+    ansible.builtin.template:
+      src: "{{ item.src }}"
+      dest: "{{ item.dest }}"
+    with_items: 
+      - src: myid.j2
+        dest: /etc/zookeeper/conf/myid
+      - src: zoo.cfg.j2
+        dest: /etc/zookeeper/conf/zoo.cfg
+      - src: environment.j2
+        dest: /etc/zookeeper/conf/environment
+    become: yes
+  - name: generate zookeeper service file
+    ansible.builtin.template:
+      src: zookeeper.service.j2
+      dest: /etc/systemd/system/zookeeper.service
+    become: yes
+  - name: enable zookeeper service
+    ansible.builtin.systemd:
+      name: zookeeper
+      enabled: yes
+      state: reloaded
+    become: yes

@@ -2,4 +2,5 @@
 - import_playbook: hadoop.yml
 - import_playbook: namenodes.yml
 - import_playbook: datanodes.yml
+- import_playbook: zookeepers.yml
 
