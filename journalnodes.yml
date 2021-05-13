@@ -1,0 +1,5 @@
+---
+- hosts: journalnodes 
+  become: yes
+  roles: 
+  - journalnode

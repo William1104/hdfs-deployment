@@ -26,15 +26,30 @@
       group: hdfs
       mode: '0755'
 
-- name: generate work files
-  ansible.builtin.template:
-    src: workers.j2
-    dest: /etc/hadoop/workers
-    owner: hdfs
-    group: hdfs
-    mode: '0644'
+  - name: generate work files
+    ansible.builtin.template:
+      src: workers.j2
+      dest: /etc/hadoop/workers
+      owner: hdfs
+      group: hdfs
+      mode: '0644'
 
-- name: format the namenode if required
-  command: sudo -u hdfs /opt/hadoop/bin/hdfs namenode -format 
-  args:
-    creates: /data/nn/current/VERSION
+- name: format or bootstrap namenode
+  block:
+  - name: format primary namenode
+    command: sudo -u hdfs /opt/hadoop/bin/hdfs namenode -format 
+    args:
+      creates: /data/nn/current/VERSION
+    when: inventory_hostname == groups['namenodes'][0]
+
+  - name: bootstrap secondary namenode
+    command: sudo -u hdfs /opt/hadoop/bin/hdfs namenode -bootstrapStandby
+    args:
+      creates: /data/nn/current/VERSION
+    when: inventory_hostname != groups['namenodes'][0]
+
+- name: initializing ha state if required
+  command: sudo -u hdfs /opt/hadoop/bin/hdfs zkfc -formatZK -nonInteractive
+  # if the ha state is already initialized, the return code will be 2
+  register: zk_init_result
+  failed_when: zk_init_result.rc == 1 
