@@ -20,3 +20,8 @@
     name: ntp
     state: started
     enabled: yes
+
+- name: defined base task executed
+  set_fact:
+    "base_task_was_executed": true
+    cacheable: true

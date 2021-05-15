@@ -1,5 +1,6 @@
 --- 
 - import_tasks: base.yml
+  when: base_task_was_executed is not defined
 
 - name: install zookeeper
   block:

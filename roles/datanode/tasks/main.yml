@@ -1,4 +1,9 @@
 --- 
+- import_tasks: base.yml
+  when: base_task_was_executed is not defined
+
+- import_tasks: hadoop.yml
+  when: hadoop_task_was_executed is not defined
 
 - name: setup data folders
   block:

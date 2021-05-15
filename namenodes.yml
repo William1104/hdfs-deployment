@@ -1,4 +1,5 @@
 ---
+- import_playbook: journalnodes.yml
 - hosts: namenodes
   become: yes
   roles: 
