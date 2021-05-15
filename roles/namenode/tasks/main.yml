@@ -34,14 +34,26 @@
     become_user: hdfs
     when: inventory_hostname == groups['namenodes'][0]
     register: result
-    failed_when: result.rc != 0 or result.rc != 2
+    # 0 - when successfully format the namenode
+    # 1 - when the namenode is already formatted. the format is skipped.
+    failed_when: result.rc not in [0,1]
 
-  - name: bootstrap secondary namenode
+  - name: start primary namenode
+    command: /opt/hadoop/bin/hdfs --daemon start namenode
+    become_user: hdfs
+
+  - name: bootstrap standby namenode
     command: /opt/hadoop/bin/hdfs namenode -bootstrapStandby -nonInteractive
     become_user: hdfs
     when: inventory_hostname != groups['namenodes'][0]
     register: result
-    failed_when: result.rc != 0 or result.rc != 2
+    # 0 - when successfully format the namenode
+    # 5 - when the namenode is already bootstrapped, the bootstrap is skipped
+    failed_when: result.rc not in [0,5]
+
+  - name: stop primary namenode after bootstrap the standby namenode
+    command: /opt/hadoop/bin/hdfs --daemon stop namenode
+    become_user: hdfs
 
   - name: stop journal nodes
     command: /opt/hadoop/bin/hdfs --workers --daemon stop journalnode
