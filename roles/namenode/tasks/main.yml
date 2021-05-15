@@ -41,6 +41,20 @@
   - name: start primary namenode
     command: /opt/hadoop/bin/hdfs --daemon start namenode
     become_user: hdfs
+    when: inventory_hostname == groups['namenodes'][0]
+    register: result
+    # 0 - when successuflly start namenode
+    # 1 - when namenode is already started. 
+    failed_when: result.rc not in [0,1]
+
+  - name: until primary namenode started. it is required to bootstrap standby namenode
+    command: /opt/hadoop/bin/hdfs --daemon status namenode
+    become_user: hdfs
+    when: inventory_hostname == groups['namenodes'][0]
+    register: result
+    until: result.rc == 0
+    retries: 10
+    delay: 30
 
   - name: bootstrap standby namenode
     command: /opt/hadoop/bin/hdfs namenode -bootstrapStandby -nonInteractive
@@ -54,6 +68,7 @@
   - name: stop primary namenode after bootstrap the standby namenode
     command: /opt/hadoop/bin/hdfs --daemon stop namenode
     become_user: hdfs
+    when: inventory_hostname == groups['namenodes'][0]
 
   - name: stop journal nodes
     command: /opt/hadoop/bin/hdfs --workers --daemon stop journalnode
@@ -68,7 +83,8 @@
   - name: format zkfc
     command: /opt/hadoop/bin/hdfs zkfc -formatZK -nonInteractive
     become_user: hdfs
-    # if the ha state is already initialized, the return code will be 2
     register: result
-    failed_when: result.rc == 1 
+    # 0 - when successfully format zookeeper
+    # 2 - when ha stat is already initalized, the format is skipped
+    failed_when: result.rc not in [0,2]
 
