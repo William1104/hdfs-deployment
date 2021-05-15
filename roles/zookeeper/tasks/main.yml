@@ -21,11 +21,13 @@
       dest: "{{ item.dest }}"
     with_items: 
       - src: myid.j2
-        dest: /etc/zookeeper/conf/myid
+        dest: /etc/zookeeper/conf_home/myid
       - src: zoo.cfg.j2
-        dest: /etc/zookeeper/conf/zoo.cfg
+        dest: /etc/zookeeper/conf_home/zoo.cfg
       - src: environment.j2
-        dest: /etc/zookeeper/conf/environment
+        dest: /etc/zookeeper/conf_home/environment
+      - src: log4j.properties.j2
+        dest: /etc/zookeeper/conf_home/log4j.properties
     become: yes
   - name: generate zookeeper service file
     ansible.builtin.template:

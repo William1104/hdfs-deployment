@@ -36,6 +36,9 @@
 
 - name: format or bootstrap namenode
   block:
+  - name: start journal nodes 
+    command: sudo -u hdfs sh -c "bin/hdfs --daemon status journalnode || bin/hdfs --daemon start journalnode"
+     
   - name: format primary namenode
     command: sudo -u hdfs /opt/hadoop/bin/hdfs namenode -format 
     args:
