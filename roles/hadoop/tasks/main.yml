@@ -5,6 +5,11 @@
     name: openjdk-11-jdk-headless
     state: latest
 
+- name: be sure acl installed. 
+  yum:
+    name: acl
+    state: latest
+
 - name: setup hdfs account
   block:
   - name: install zsh
@@ -32,51 +37,72 @@
     loop: "{{ ansible_play_batch }}"
 
 - name: extract hadoop
-  ansible.builtin.unarchive:
-    src: https://mirror-hk.koddos.net/apache/hadoop/common/hadoop-3.3.0/hadoop-3.3.0-aarch64.tar.gz
-    dest: /opt/
-    creates: /opt/hadoop-3.3.0
-    owner: hdfs
-    group: hdfs
-    remote_src: yes
+  block: 
+  - ansible.builtin.unarchive:
+      src: https://mirror-hk.koddos.net/apache/hadoop/common/hadoop-3.3.0/hadoop-3.3.0-aarch64.tar.gz
+      dest: /opt/
+      creates: /opt/hadoop-3.3.0
+      owner: hdfs
+      group: hdfs
+      remote_src: yes
 
-- name: link /opt/hadoop-3.3.0 to /opt/hadoop
-  ansible.builtin.file:
-    src: /opt/hadoop-3.3.0
-    dest: /opt/hadoop
-    owner: hdfs
-    group: hdfs
-    state: link
+  - name: link /opt/hadoop-3.3.0 to /opt/hadoop
+    ansible.builtin.file:
+      src: /opt/hadoop-3.3.0
+      dest: /opt/hadoop
+      owner: hdfs
+      group: hdfs
+      state: link
 
-- name: link /opt/hadoop/etc/hadoop to /etc/hadoop
-  ansible.builtin.file:
-    src: /opt/hadoop/etc/hadoop
-    dest: /etc/hadoop
-    owner: hdfs
-    group: hdfs
-    state: link
+  - name: link /opt/hadoop/etc/hadoop to /etc/hadoop
+    ansible.builtin.file:
+      src: /opt/hadoop/etc/hadoop
+      dest: /etc/hadoop
+      owner: hdfs
+      group: hdfs
+      state: link
 
-- name: set required environment variables
-  ansible.builtin.blockinfile:
-    path: /etc/hadoop/hadoop-env.sh
-    state: present
-    marker: "# {mark} ANSIBLE MANAGED BLOCK "
-    block: |
-      export JAVA_HOME=$(readlink -f /usr/bin/javac | sed "s:/bin/javac::")
-      export HADOOP_HOME=/opt/hadoop
+- name: update hadoop common configuration
+  block:
+  - name: set required environment variables
+    ansible.builtin.blockinfile:
+      path: /etc/hadoop/hadoop-env.sh
+      state: present
+      marker: "# {mark} ANSIBLE MANAGED BLOCK "
+      block: |
+        export JAVA_HOME=$(readlink -f /usr/bin/javac | sed "s:/bin/javac::")
+        export HADOOP_HOME=/opt/hadoop
 
-- name: generate core-site.xml
-  ansible.builtin.template:
-    src: core-site.xml.j2
-    dest: /opt/hadoop/etc/hadoop/core-site.xml
-    owner: hdfs
-    group: hdfs
-    mode: '0664'
+  - name: generate core-site.xml
+    ansible.builtin.template:
+      src: core-site.xml.j2
+      dest: /opt/hadoop/etc/hadoop/core-site.xml
+      owner: hdfs
+      group: hdfs
+      mode: '0664'
 
-- name: generate hdfs-site.xml
-  ansible.builtin.template:
-    src: hdfs-site.xml.j2
-    dest: /opt/hadoop/etc/hadoop/hdfs-site.xml
-    owner: hdfs
-    group: hdfs
-    mode: '0664'
+  - name: generate hdfs-site.xml
+    ansible.builtin.template:
+      src: hdfs-site.xml.j2
+      dest: /opt/hadoop/etc/hadoop/hdfs-site.xml
+      owner: hdfs
+      group: hdfs
+      mode: '0664'
+
+- name: prepare data folder
+  block: 
+  - name: create /media/nvme/data
+    ansible.builtin.file:
+      path: /media/nvme/hdfs
+      state: directory
+      owner: hdfs
+      group: hdfs
+      mode: '0755'
+
+  - name: link /media/nvme/hdfs to /data
+    ansible.builtin.file:
+      src: /media/nvme/hdfs
+      dest: /data
+      owner: hdfs
+      group: hdfs
+      state: link

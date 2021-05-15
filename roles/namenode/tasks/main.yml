@@ -2,22 +2,6 @@
 
 - name: setup data folders
   block:
-  - name: create /media/nvme/data 
-    ansible.builtin.file:
-      path: /media/nvme/hdfs
-      state: directory
-      owner: hdfs
-      group: hdfs  
-      mode: '0755'
-
-  - name: link /media/nvme/hdfs to /data
-    ansible.builtin.file:
-      src: /media/nvme/hdfs
-      dest: /data
-      owner: hdfs
-      group: hdfs
-      state: link
-
   - name: create /data/nn folder
     ansible.builtin.file:
       path: /data/nn
@@ -26,7 +10,7 @@
       group: hdfs
       mode: '0755'
 
-  - name: generate work files
+  - name: generate workers files
     ansible.builtin.template:
       src: workers.j2
       dest: /etc/hadoop/workers
@@ -37,22 +21,31 @@
 - name: format or bootstrap namenode
   block:
   - name: start journal nodes 
-    command: sudo -u hdfs sh -c "bin/hdfs --daemon status journalnode || bin/hdfs --daemon start journalnode"
+    command: /opt/hadoop/bin/hdfs --workers --daemon start journalnode
+    become_user: hdfs
      
   - name: format primary namenode
-    command: sudo -u hdfs /opt/hadoop/bin/hdfs namenode -format 
+    command: /opt/hadoop/bin/hdfs namenode -format 
+    become_user: hdfs
     args:
       creates: /data/nn/current/VERSION
     when: inventory_hostname == groups['namenodes'][0]
 
   - name: bootstrap secondary namenode
-    command: sudo -u hdfs /opt/hadoop/bin/hdfs namenode -bootstrapStandby
+    command: /opt/hadoop/bin/hdfs namenode -bootstrapStandby
+    become_user: hdfs
     args:
       creates: /data/nn/current/VERSION
     when: inventory_hostname != groups['namenodes'][0]
 
+  - name: stop journal nodes
+    command: /opt/hadoop/bin/hdfs --workers --daemon stop journalnode
+    become_user: hdfs
+
 - name: initializing ha state if required
-  command: sudo -u hdfs /opt/hadoop/bin/hdfs zkfc -formatZK -nonInteractive
+  command: /opt/hadoop/bin/hdfs zkfc -formatZK -nonInteractive
+  become_user: hdfs
   # if the ha state is already initialized, the return code will be 2
   register: zk_init_result
   failed_when: zk_init_result.rc == 1 
+
