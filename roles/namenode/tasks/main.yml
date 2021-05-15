@@ -33,11 +33,15 @@
     command: /opt/hadoop/bin/hdfs namenode -format -nonInteractive
     become_user: hdfs
     when: inventory_hostname == groups['namenodes'][0]
+    register: result
+    failed_when: result.rc != 0 or result.rc != 2
 
   - name: bootstrap secondary namenode
     command: /opt/hadoop/bin/hdfs namenode -bootstrapStandby -nonInteractive
     become_user: hdfs
     when: inventory_hostname != groups['namenodes'][0]
+    register: result
+    failed_when: result.rc != 0 or result.rc != 2
 
   - name: stop journal nodes
     command: /opt/hadoop/bin/hdfs --workers --daemon stop journalnode
@@ -53,6 +57,6 @@
     command: /opt/hadoop/bin/hdfs zkfc -formatZK -nonInteractive
     become_user: hdfs
     # if the ha state is already initialized, the return code will be 2
-    register: zk_init_result
-    failed_when: zk_init_result.rc == 1 
+    register: result
+    failed_when: result.rc == 1 
 
