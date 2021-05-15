@@ -30,17 +30,13 @@
     become_user: hdfs
      
   - name: format primary namenode
-    command: /opt/hadoop/bin/hdfs namenode -format 
+    command: /opt/hadoop/bin/hdfs namenode -format -nonInteractive
     become_user: hdfs
-    args:
-      creates: /data/nn/current/VERSION
     when: inventory_hostname == groups['namenodes'][0]
 
   - name: bootstrap secondary namenode
-    command: /opt/hadoop/bin/hdfs namenode -bootstrapStandby
+    command: /opt/hadoop/bin/hdfs namenode -bootstrapStandby -nonInteractive
     become_user: hdfs
-    args:
-      creates: /data/nn/current/VERSION
     when: inventory_hostname != groups['namenodes'][0]
 
   - name: stop journal nodes
@@ -48,9 +44,15 @@
     become_user: hdfs
 
 - name: initializing ha state if required
-  command: /opt/hadoop/bin/hdfs zkfc -formatZK -nonInteractive
-  become_user: hdfs
-  # if the ha state is already initialized, the return code will be 2
-  register: zk_init_result
-  failed_when: zk_init_result.rc == 1 
+  block:
+  - name: stop zkfc if running
+    command: /opt/hadoop/bin/hdfs --daemon stop zkfc
+    become_user: hdfs
+
+  - name: format zkfc
+    command: /opt/hadoop/bin/hdfs zkfc -formatZK -nonInteractive
+    become_user: hdfs
+    # if the ha state is already initialized, the return code will be 2
+    register: zk_init_result
+    failed_when: zk_init_result.rc == 1 
 
