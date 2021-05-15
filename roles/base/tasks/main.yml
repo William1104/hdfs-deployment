@@ -1,0 +1,22 @@
+--- 
+
+- name: be sure jdk 11 installed
+  yum:
+    name: openjdk-11-jdk-headless
+    state: latest
+
+- name: be sure acl installed. 
+  yum:
+    name: acl
+    state: latest
+
+- name: be sure ntp installed.
+  yum: 
+    name: ntp
+    state: latest
+
+- name: be sure ntpd up and running
+  ansible.builtin.systemd:
+    name: ntp
+    state: started
+    enabled: yes

@@ -1,4 +1,6 @@
 --- 
+- import_tasks: base.yml
+- import_tasks: hadoop.yml
 
 - name: setup data folders
   block:

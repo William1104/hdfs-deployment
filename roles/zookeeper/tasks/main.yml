@@ -1,4 +1,5 @@
 --- 
+- import_tasks: base.yml
 
 - name: install zookeeper
   block:
@@ -28,16 +29,13 @@
         dest: /etc/zookeeper/conf_home/environment
       - src: log4j.properties.j2
         dest: /etc/zookeeper/conf_home/log4j.properties
-    become: yes
   - name: generate zookeeper service file
     ansible.builtin.template:
       src: zookeeper.service.j2
       dest: /etc/systemd/system/zookeeper.service
-    become: yes
   - name: enable zookeeper service
     ansible.builtin.systemd:
       name: zookeeper
       enabled: yes
       daemon_reload: yes
       state: restarted
-    become: yes

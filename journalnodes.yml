@@ -1,4 +1,5 @@
 ---
+- import_playbook: zookeepers.yml
 - hosts: journalnodes 
   become: yes
   roles: 
